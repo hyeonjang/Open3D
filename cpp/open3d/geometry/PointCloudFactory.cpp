@@ -79,7 +79,8 @@ std::shared_ptr<PointCloud> CreatePointCloudFromFloatDepthImage(
                         (i - principal_point.second) * z / focal_length.second;
                 Eigen::Vector4d point =
                         camera_pose * Eigen::Vector4d(x, y, z, 1.0);
-                pointcloud->points_[cnt++] = point.block<3, 1>(0, 0);
+                pointcloud->points_[cnt++] =
+                        point.block<3, 1>(0, 0) / point.w();
             } else if (!project_valid_depth_only) {
                 double z = std::numeric_limits<float>::quiet_NaN();
                 double x = std::numeric_limits<float>::quiet_NaN();
@@ -124,7 +125,7 @@ std::shared_ptr<PointCloud> CreatePointCloudFromRGBDImageT(
                         (i - principal_point.second) * z / focal_length.second;
                 Eigen::Vector4d point =
                         camera_pose * Eigen::Vector4d(x, y, z, 1.0);
-                pointcloud->points_[cnt] = point.block<3, 1>(0, 0);
+                pointcloud->points_[cnt] = point.block<3, 1>(0, 0) / point.w();
                 pointcloud->colors_[cnt++] =
                         Eigen::Vector3d(pc[0], pc[(NC - 1) / 2], pc[NC - 1]) /
                         scale;
