@@ -119,21 +119,25 @@ Eigen::Matrix4d TransformationEstimationForColoredICP::ComputeTransformation(
         const geometry::PointCloud &target,
         const CorrespondenceSet &corres) const {
     if (corres.empty()) {
-        utility::LogError(
-                "No correspondences found between source and target "
-                "pointcloud.");
+        return Eigen::Matrix4d::Identity();
+        // utility::LogError(
+        //         "No correspondences found between source and target "
+        //         "pointcloud.");
     }
     if (!target.HasNormals()) {
-        utility::LogError(
-                "ColoredICP requires target pointcloud to have normals.");
+        return Eigen::Matrix4d::Identity();
+        // utility::LogError(
+        //         "ColoredICP requires target pointcloud to have normals.");
     }
     if (!target.HasColors()) {
-        utility::LogError(
-                "ColoredICP requires target pointcloud to have colors.");
+        return Eigen::Matrix4d::Identity();
+        // utility::LogError(
+        //         "ColoredICP requires target pointcloud to have colors.");
     }
     if (!source.HasColors()) {
-        utility::LogError(
-                "ColoredICP requires source pointcloud to have colors.");
+        return Eigen::Matrix4d::Identity();
+        // utility::LogError(
+        //         "ColoredICP requires source pointcloud to have colors.");
     }
 
     double sqrt_lambda_geometric = sqrt(lambda_geometric_);
