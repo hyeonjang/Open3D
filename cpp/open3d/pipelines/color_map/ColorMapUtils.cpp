@@ -254,15 +254,20 @@ void SetGeometryColorAverage(
         int image_boundary_margin,
         int invisible_vertex_color_knn) {
     size_t n_vertex = mesh.vertices_.size();
-    mesh.vertex_colors_.clear();
-    mesh.vertex_colors_.resize(n_vertex);
+    // mesh.vertex_colors_.clear();
+    // mesh.vertex_colors_.resize(n_vertex);
+    std::vector<Eigen::Vector3d> m_vertex_colors(n_vertex);
+    std::vector<double> sums(n_vertex);
+
     std::vector<size_t> valid_vertices;
     std::vector<size_t> invalid_vertices;
 #pragma omp parallel for schedule(static) \
         num_threads(utility::EstimateMaxThreads())
     for (int i = 0; i < (int)n_vertex; i++) {
-        mesh.vertex_colors_[i] = Eigen::Vector3d::Zero();
-        double sum = 0.0;
+        // mesh.vertex_colors_[i] = Eigen::Vector3d::Zero();
+        m_vertex_colors[i] = Eigen::Vector3d::Zero();
+        // double sum = 0.0;
+        sums[i] = 0.0;
         for (size_t iter = 0; iter < visibility_vertex_to_image[i].size();
              iter++) {
             int j = visibility_vertex_to_image[i][iter];
@@ -287,14 +292,19 @@ void SetGeometryColorAverage(
             float g = (float)g_temp / 255.0f;
             float b = (float)b_temp / 255.0f;
             if (valid) {
-                mesh.vertex_colors_[i] += Eigen::Vector3d(r, g, b);
-                sum += 1.0;
+                // mesh.vertex_colors_[i] += Eigen::Vector3d(r, g, b);
+                m_vertex_colors[i] += Eigen::Vector3d(r, g, b);
+                // sum += 1.0;
+                sums[i] += 1.0;
             }
         }
 #pragma omp critical(SetGeometryColorAverage)
         {
-            if (sum > 0.0) {
-                mesh.vertex_colors_[i] /= sum;
+            if (sums[i] > 0.0) {
+                // mesh.vertex_colors_[i] /= sum;
+                m_vertex_colors[i] /= sums[i];
+                mesh.vertex_colors_[i] = m_vertex_colors[i];
+
                 valid_vertices.push_back(i);
             } else {
                 invalid_vertices.push_back(i);
@@ -302,26 +312,26 @@ void SetGeometryColorAverage(
         }
     }
     if (invisible_vertex_color_knn > 0) {
-        std::shared_ptr<geometry::TriangleMesh> valid_mesh =
-                mesh.SelectByIndex(valid_vertices);
-        geometry::KDTreeFlann kd_tree(*valid_mesh);
-#pragma omp parallel for schedule(static) \
-        num_threads(utility::EstimateMaxThreads())
-        for (int i = 0; i < (int)invalid_vertices.size(); ++i) {
-            size_t invalid_vertex = invalid_vertices[i];
-            std::vector<int> indices;  // indices to valid_mesh
-            std::vector<double> dists;
-            kd_tree.SearchKNN(mesh.vertices_[invalid_vertex],
-                              invisible_vertex_color_knn, indices, dists);
-            Eigen::Vector3d new_color(0, 0, 0);
-            for (const int& index : indices) {
-                new_color += valid_mesh->vertex_colors_[index];
-            }
-            if (indices.size() > 0) {
-                new_color /= static_cast<double>(indices.size());
-            }
-            mesh.vertex_colors_[invalid_vertex] = new_color;
-        }
+//         std::shared_ptr<geometry::TriangleMesh> valid_mesh =
+//                 mesh.SelectByIndex(valid_vertices);
+//         geometry::KDTreeFlann kd_tree(*valid_mesh);
+// #pragma omp parallel for schedule(static) 
+//         num_threads(utility::EstimateMaxThreads())
+//         for (int i = 0; i < (int)invalid_vertices.size(); ++i) {
+//             size_t invalid_vertex = invalid_vertices[i];
+//             std::vector<int> indices;  // indices to valid_mesh
+//             std::vector<double> dists;
+//             kd_tree.SearchKNN(mesh.vertices_[invalid_vertex],
+//                               invisible_vertex_color_knn, indices, dists);
+//             Eigen::Vector3d new_color(0, 0, 0);
+//             for (const int& index : indices) {
+//                 new_color += valid_mesh->vertex_colors_[index];
+//             }
+//             if (indices.size() > 0) {
+//                 new_color /= static_cast<double>(indices.size());
+//             }
+//             mesh.vertex_colors_[invalid_vertex] = new_color;
+//         }
     }
 }
 
